@@ -1,0 +1,1 @@
+# TODO-PLANS-DURATION: Add Duration to Plan Cards&#10;&#10;Plan: Append "Duration --- X days" to desc of all plans:&#10;1st card: "Duration --- 2 days"&#10;2nd: "Duration --- 3 days"&#10;3rd: "Duration --- 5 days"&#10;&#10;Steps:&#10;- [ ] Edit all 6 plan arrays (cryptoPlans, stockPlans, etc.) to append durations&#10;- [ ] Verify layout&#10;&#10;Proceed?

@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  firstName     String?
+  lastName      String?
+  isVerified    Boolean  @default(false)
+  isAdmin       Boolean  @default(false)
+  twoFactor     Boolean  @default(false)
+  secret2FA     String?
+  balance       Float    @default(0)
+  invested      Float    @default(0)
+  withdrawn     Float    @default(0)
+  referralCode  String   @unique @default(cuid())
+  referredBy    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  investments Investment[]
+  transactions Transaction[]
+  referrals    User[] @relation("ReferredBy")
+  referer      User?   @relation("ReferredBy", fields: [referredBy], references: [id])
+}
+
+model Investment {
+  id        String @id @default(cuid())
+  userId    String
+  planId    String
+  amount    Float
+  dailyRate Float
+  days      Int
+  startDate DateTime @default(now())
+  endDate   DateTime?
+  status    String @default("active")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  plan Plan @relation(fields: [planId], references: [id])
+
+  @@map("investments")
+}
+
+model Transaction {
+  id         String @id @default(cuid())
+  userId     String
+  type       String // deposit, withdrawal, profit
+  amount     Float
+  status     String // pending, completed
+  txHash     String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Plan {
+  id        String @id @default(cuid())
+  name      String
+  minDeposit Float
+  maxDeposit Float
+  dailyReturn Float
+  duration  Int
+  investments Investment[]
+
+  @@map("plans")
+}
+
