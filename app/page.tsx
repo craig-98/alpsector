@@ -10,7 +10,7 @@ import SecurityTrust from '@/components/SecurityTrust'
 import Testimonials from '@/components/Testimonials'
 import FAQ from '@/components/FAQ'
 import Footer from '@/components/Footer'
-import { apiFetch, getDashboard } from '@/lib/api'
+import { getDashboard } from '@/lib/api'
 import { initSocket } from '@/lib/socket'
 
 
@@ -18,24 +18,53 @@ import { initSocket } from '@/lib/socket'
 
 const inter = Inter({ subsets: ['latin'] })
 
-const markets = [
-  { name: 'SILVER', price: 22.89, change: 0.12, positive: true },
-  { name: 'OIL', price: 78.34, change: -1.23, positive: false },
-  { name: 'SPY', price: 4987.23, change: 0.67, positive: true },
-  { name: 'NASDAQ', price: 15678.45, change: -0.34, positive: false },
-  { name: 'TSLA', price: 433.27, change: 3.45, positive: true },
-  { name: 'AAPL', price: 254.41, change: -0.56, positive: false },
-]
+import { assets } from '@/lib/api'
 
 export default function Home() {
   const [time, setTime] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [markets, setMarkets] = useState<any[]>([])
+
+  const fetchMarkets = async () => {
+    try {
+      const [stocks, etfs] = await Promise.all([
+        assets.getStocks(),
+        assets.getEtfs()
+      ]);
+      
+      const formattedStocks = (stocks || []).slice(0, 3).map((s: any) => ({
+        name: s.symbol,
+        price: s.price,
+        change: s.change_percentage,
+        positive: s.change_percentage >= 0
+      }));
+      
+      const formattedEtfs = (etfs || []).slice(0, 3).map((e: any) => ({
+        name: e.symbol,
+        price: e.price || 0,
+        change: e.performance_ytd || 0,
+        positive: (e.performance_ytd || 0) >= 0
+      }));
+
+      setMarkets([...formattedStocks, ...formattedEtfs]);
+    } catch (err) {
+      console.error('Failed to fetch markets:', err);
+      // Fallback to dummy if API fails
+      setMarkets([
+        { name: 'SILVER', price: 22.89, change: 0.12, positive: true },
+        { name: 'OIL', price: 78.34, change: -1.23, positive: false },
+        { name: 'SPY', price: 4987.23, change: 0.67, positive: true },
+        { name: 'NASDAQ', price: 15678.45, change: -0.34, positive: false },
+      ]);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     setIsAuthenticated(!!token)
 
     initSocket()
+    fetchMarkets()
   }, [])
 
   useEffect(() => {

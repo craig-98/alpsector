@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { login } from '@/lib/api';
+import { auth } from '@/lib/api';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -14,21 +14,45 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setResendSuccess(false);
 
     try {
-      const data = await login({ email, password });
+      const data = await auth.login({ email, password });
       localStorage.setItem('token', data.token);
+      if (data.refreshToken) {
+        localStorage.setItem('refreshToken', data.refreshToken);
+      }
+      window.dispatchEvent(new Event('user-logged-in'));
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
+    setResendLoading(true);
+    setError('');
+    try {
+      await auth.resendVerification(email);
+      setResendSuccess(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend verification email');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -47,6 +71,11 @@ export default function LoginPage() {
           {error && (
             <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
               {error}
+            </div>
+          )}
+          {resendSuccess && (
+            <div className="p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
+              Verification email sent! Check your inbox.
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -76,9 +105,23 @@ export default function LoginPage() {
               {loading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
+          
+          {error.includes('not yet verified') && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resendLoading}
+                className="text-sm text-emerald-600 hover:underline"
+              >
+                {resendLoading ? 'Sending...' : 'Resend verification email'}
+              </button>
+            </div>
+          )}
+          
           <div className="text-center pt-4">
             <p className="text-sm text-gray-600">
-              Don&apos;t have an account?{' '}
+              Don't have an account?{' '}
               <Link href="/register" className="font-medium text-emerald-600 hover:underline">
                 Sign up here
               </Link>

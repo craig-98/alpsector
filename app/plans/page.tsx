@@ -5,6 +5,9 @@ import { motion } from 'framer-motion'
 import { User, Mail, Shield, DollarSign, BarChart3, ArrowRightLeft, Bitcoin, TrendingUp, Building2, Package, Percent, Leaf, Zap } from "lucide-react"
 import { trialPlans } from './trialPlans'
 import Footer from '@/components/Footer'
+import { assets, investments as investmentsApi } from '@/lib/api'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 
 const assetClasses = [
@@ -14,7 +17,7 @@ const assetClasses = [
   { id: 'commodities', label: 'Commodities', icon: <Package className="w-6 h-6" />, color: 'from-dark-grey-400 to-dark-grey-600' },
   { id: 'bonds', label: 'Bonds', icon: <DollarSign className="w-6 h-6" />, color: 'from-black to-dark-grey-600' },
   { id: 'agriculture', label: 'Agriculture', icon: <Leaf className="w-6 h-6" />, color: 'from-dark-grey-500 to-wine-500' },
-{ id: 'trial', label: 'Trial Plan', icon: <Zap className="w-6 h-6" />, color: 'from-emerald-400 to-emerald-600' },
+  { id: 'trial', label: 'Trial Plan', icon: <Zap className="w-6 h-6" />, color: 'from-emerald-400 to-emerald-600' },
 ]
 
 
@@ -204,16 +207,99 @@ const steps = [
 ];
 
 export default function PlansPage() {
+  const router = useRouter()
   const [activeAsset, setActiveAsset] = useState('crypto')
   const [selectedPlan, setSelectedPlan] = useState(0)
   const [amount, setAmount] = useState('')
   const [durationDays, setDurationDays] = useState(30)
   const [profit, setProfit] = useState(0)
   const [totalReturn, setTotalReturn] = useState(0)
+  const [backendAssets, setBackendAssets] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const currentPlans = activeAsset === 'stocks' ? stockPlans : activeAsset === 'bonds' ? bondsPlans : activeAsset === 'commodities' ? commoditiesPlans : activeAsset === 'real-estate' ? realEstatePlans : activeAsset === 'agriculture' ? agriculturePlans : activeAsset === 'trial' ? trialPlans : cryptoPlans
-  const currentPlan = currentPlans[selectedPlan]
-  const headerColors = ['#e5e7eb', '#d1d5db', '#cbd5e1']
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        setLoading(true)
+        const [stocks, etfs] = await Promise.all([
+          assets.getStocks().catch(() => []),
+          assets.getEtfs().catch(() => [])
+        ])
+        setBackendAssets([...stocks, ...etfs])
+      } catch (err) {
+        console.error('Failed to fetch assets:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAssets()
+  }, [])
+
+  const handleInvest = async (plan: any) => {
+    try {
+      if (!localStorage.getItem("token")) {
+        toast.error("Please login to invest");
+        router.push("/login");
+        return;
+      }
+
+      let numAmount = parseFloat(amount);
+      if (!amount || isNaN(numAmount) || numAmount === 0) {
+        numAmount = plan.min;
+      }
+
+      if (numAmount < plan.min) {
+        toast.error(`Minimum investment is $${plan.min}`);
+        return;
+      }
+
+      await investmentsApi.create({
+        plan: plan.name,
+        amount: numAmount,
+        type: activeAsset,
+        symbol: plan.name.split(" ")[0].toUpperCase(), // Generate a simple symbol
+        name: plan.name,
+        percentageProfit: plan.apy, // Using APY as the profit percentage
+        isRetirement: activeAsset === "retirement",
+      });
+
+      toast.success("Investment successful!");
+      router.push("/dashboard");
+    } catch (err: any) {
+      toast.error(err.message || "Investment failed");
+    }
+  };
+
+  const currentPlans = (() => {
+    let plans = activeAsset === 'stocks' ? stockPlans : 
+               activeAsset === 'bonds' ? bondsPlans : 
+               activeAsset === 'commodities' ? commoditiesPlans : 
+               activeAsset === 'real-estate' ? realEstatePlans : 
+               activeAsset === 'agriculture' ? agriculturePlans : 
+               activeAsset === 'trial' ? trialPlans : cryptoPlans;
+
+    // Add backend assets as plans if they match the active asset type
+    if (activeAsset === 'stocks' || (activeAsset === 'crypto' && backendAssets.some(a => a.type === 'crypto'))) {
+      const mappedAssets = backendAssets
+        .filter(a => (activeAsset === 'stocks' && (a.type === 'stock' || a.type === 'etf')) || 
+                     (activeAsset === 'crypto' && a.type === 'crypto'))
+        .map(a => ({
+          name: a.name || a.symbol,
+          apy: a.change_percentage || 5.0,
+          min: 100,
+          max: Infinity,
+          desc: `Direct investment in ${a.name || a.symbol}. Current price: $${a.price?.toLocaleString() || 'N/A'}`,
+          icon: TrendingUp,
+          colorIndex: 0,
+          symbol: a.symbol
+        }));
+      return [...plans, ...mappedAssets];
+    }
+    return plans;
+  })();
+
+  const currentPlan = currentPlans[selectedPlan] || currentPlans[0] || cryptoPlans[0];
+  const headerColors = ['bg-wine-100', 'bg-dark-grey-200', 'bg-wine-50', 'bg-dark-grey-100'];
 
   const calculateProfit = useCallback(() => {
     const numAmount = parseFloat(amount) || 0
@@ -304,48 +390,61 @@ export default function PlansPage() {
         </motion.div>
 
         {/* Plan Cards */}
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
-          {currentPlans.map((plan, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              whileHover={{ y: -6, transition: { duration: 0.3 } }}
-              className="bg-white rounded-[14px] shadow-[0_10px_25px_rgba(0,0,0,0.08)] hover:shadow-[0_18px_40px_rgba(0,0,0,0.15)] transition-all duration-300 overflow-hidden cursor-pointer border hover:border-transparent"
-              onClick={() => setSelectedPlan(index)}
-            >
-              <div 
-                className={`h-[70px] sm:h-[90px] rounded-t-[14px] ${headerColors[index]}`}
-              />
-              <div className="relative -mt-6 sm:-mt-8">
-                <div className="w-16 sm:w-20 h-16 sm:h-20 mx-auto bg-gradient-to-br from-black to-dark-grey-900 rounded-2xl shadow-2xl flex items-center justify-center border-4 border-white">
-                  {plan.icon ? <plan.icon className="w-8 sm:w-10 h-8 sm:h-10 text-white drop-shadow-lg" /> : <TrendingUp className="w-8 sm:w-10 h-8 sm:h-10 text-white drop-shadow-lg" />}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
+          {loading ? (
+            <div className="col-span-full flex flex-col items-center justify-center p-20 space-y-4">
+              <div className="w-16 h-16 border-4 border-wine-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-xl font-bold text-slate-900">Loading investment opportunities...</p>
+            </div>
+          ) : (
+            currentPlans.map((plan, index) => (
+              <motion.div
+                key={plan.name + index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -6, transition: { duration: 0.3 } }}
+                className={`bg-white rounded-[14px] shadow-[0_10px_25px_rgba(0,0,0,0.08)] hover:shadow-[0_18px_40px_rgba(0,0,0,0.15)] transition-all duration-300 overflow-hidden cursor-pointer border ${selectedPlan === index ? 'ring-4 ring-wine-500/20 border-wine-500' : 'hover:border-transparent'}`}
+                onClick={() => setSelectedPlan(index)}
+              >
+                <div 
+                  className={`h-[70px] sm:h-[90px] rounded-t-[14px] ${headerColors[index] || headerColors[0]}`}
+                />
+                <div className="relative -mt-6 sm:-mt-8">
+                  <div className="w-16 sm:w-20 h-16 sm:h-20 mx-auto bg-gradient-to-br from-black to-dark-grey-900 rounded-2xl shadow-2xl flex items-center justify-center border-4 border-white">
+                    {plan.icon ? <plan.icon className="w-8 sm:w-10 h-8 sm:h-10 text-white drop-shadow-lg" /> : <TrendingUp className="w-8 sm:w-10 h-8 sm:h-10 text-white drop-shadow-lg" />}
+                  </div>
                 </div>
-              </div>
-              <div className="p-6 sm:p-[30px]">
-                <h3 className="text-lg sm:text-[20px] font-semibold text-[#111827] mb-3 leading-tight">
-                  {plan.name}
-                </h3>
-                <p className="text-[#374151] font-bold text-base sm:text-lg mb-4">
-                  {plan.apy}% APY
-                </p>
-                <div className="mb-6">
-                  <p className="text-sm font-medium text-[#4b5563] uppercase tracking-wide mb-1">
-                    Minimum Investment
+                <div className="p-6 sm:p-[30px]">
+                  <h3 className="text-lg sm:text-[20px] font-semibold text-[#111827] mb-3 leading-tight">
+                    {plan.name}
+                  </h3>
+                  <p className="text-[#374151] font-bold text-base sm:text-lg mb-4">
+                    {plan.apy}% APY
                   </p>
-                  <p className="text-xl font-semibold text-[#111827]">
-                    ${plan.min} - ${plan.max === Infinity ? '+' : plan.max.toLocaleString()}
+                  <div className="mb-6">
+                    <p className="text-sm font-medium text-[#4b5563] uppercase tracking-wide mb-1">
+                      Minimum Investment
+                    </p>
+                    <p className="text-xl font-semibold text-[#111827]">
+                      ${plan.min} - ${plan.max === Infinity ? '+' : plan.max.toLocaleString()}
+                    </p>
+                  </div>
+                  <p className="text-[#4b5563] leading-relaxed mb-8">
+                    {plan.desc}
                   </p>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleInvest(plan);
+                    }}
+                    className="w-full px-[22px] py-[10px] border border-[#9ca3af] bg-transparent rounded-lg text-[#4b5563] font-medium hover:bg-[#374151] hover:text-white hover:border-transparent transition-all duration-300 uppercase tracking-wide text-sm"
+                  >
+                    Invest Now
+                  </button>
                 </div>
-                <p className="text-[#4b5563] leading-relaxed mb-8">
-                  {plan.desc}
-                </p>
-                <button className="w-full px-[22px] py-[10px] border border-[#9ca3af] bg-transparent rounded-lg text-[#4b5563] font-medium hover:bg-[#374151] hover:text-white hover:border-transparent transition-all duration-300 uppercase tracking-wide text-sm">
-                  Invest Now
-                </button>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            )))
+          }
         </div>
 
         {/* Sophisticated Calculator */}
@@ -371,7 +470,7 @@ export default function PlansPage() {
                     className="w-full p-4 sm:p-6 rounded-2xl border-2 border-slate-200 text-base sm:text-xl bg-slate-50 focus:border-emerald-500 focus:ring-4 ring-emerald-500/20 transition-all font-semibold min-h-[48px]"
                   >
                     {currentPlans.map((plan, index) => (
-                      <option key={index} value={index}>{plan.name}</option>
+                      <option key={plan.name} value={index}>{plan.name}</option>
                     ))}
                   </select>
                 </div>
@@ -445,6 +544,7 @@ export default function PlansPage() {
                 <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => handleInvest(currentPlan)}
                 className="bg-gradient-to-r from-black to-dark-grey-900 hover:from-dark-grey-900 hover:to-black text-white font-black text-xl px-12 py-6 rounded-2xl shadow-2xl hover:shadow-black/50 transition-all duration-300 uppercase tracking-wide"
               >
                 Start Investing
@@ -461,13 +561,13 @@ export default function PlansPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {steps.map((step, index) => (
               <motion.div 
-                key={index}
+                key={step.title}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 className="group text-center p-8 rounded-3xl bg-white shadow-xl hover:shadow-2xl border border-slate-200 hover:border-emerald-200 transition-all duration-500 hover:bg-emerald-50"
               >
                 <div className="w-24 h-24 mx-auto mb-8 rounded-2xl bg-gradient-to-r from-black to-dark-grey-900 shadow-2xl group-hover:scale-110 transition-all duration-300 flex items-center justify-center">
-                  <User className="w-12 h-12 text-white font-bold" />
+                  <step.icon className="w-12 h-12 text-white font-bold" />
                 </div>
                 <h4 className="text-2xl font-bold text-slate-900 mb-4">{step.title}</h4>
                 <p className="text-slate-600 leading-relaxed">{step.desc}</p>

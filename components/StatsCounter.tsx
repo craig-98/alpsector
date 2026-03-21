@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, ReactNode } from 'react'
 import { motion } from 'framer-motion'
+import { Users, DollarSign, ArrowDown, BarChart3 } from 'lucide-react'
 
 interface Stat {
   label: string
   value: string
-  icon: string
+  icon: ReactNode
   color: string
 }
 
