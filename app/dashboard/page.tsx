@@ -307,6 +307,27 @@ export default function Dashboard() {
     toast.success("Dashboard refreshed");
   };
 
+  // Invest Now handler - checks auth + balance
+  const handleInvestNow = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login to invest");
+      router.push("/login");
+      return;
+    }
+    if (availableBalance <= 0) {
+      toast("Insufficient balance. Please deposit funds first.", {
+        action: {
+          label: "Deposit",
+          onClick: () => setDepositOpen(true),
+        },
+      });
+      setDepositOpen(true);
+      return;
+    }
+    router.push("/plans");
+  };
+
   // Loading state
   if (!isAuthenticated || loading) {
     return (
@@ -505,14 +526,14 @@ export default function Dashboard() {
     }),
   );
 
-  // If no investments, show a default empty state or use the hardcoded ones as fallback if preferred
-  // For now, let's keep it truly dynamic but add a placeholder if empty
+  // If no investments, show suggested allocation categories
   if (allocationData.length === 0) {
-    allocationData.push({
-      name: "No Investments",
-      value: 1,
-      color: "#2C2C2E",
-    });
+    allocationData.push(
+      { name: "Crypto", value: 35, color: theme.gold },
+      { name: "Stocks", value: 30, color: theme.emerald },
+      { name: "Real Estate", value: 20, color: theme.ruby },
+      { name: "Bonds", value: 15, color: theme.slate },
+    );
   }
 
   // Performance data
@@ -989,7 +1010,7 @@ export default function Dashboard() {
                 title: "Invest Now",
                 color: "gold",
                 bg: "from-yellow-500/20",
-                link: "/plans",
+                action: handleInvestNow,
               },
               {
                 icon: Wallet,
@@ -1250,7 +1271,9 @@ export default function Dashboard() {
               Asset Allocation
             </h2>
             <p className="text-xl text-white font-bold max-w-2xl mx-auto">
-              Your portfolio diversification across asset classes
+              {(userInvestments?.data?.length || 0) > 0 
+                ? "Your portfolio diversification across asset classes"
+                : "Suggested allocation strategy — start investing to build your portfolio"}
             </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -1259,25 +1282,38 @@ export default function Dashboard() {
               className={`${glass} p-8 rounded-3xl h-[400px] flex items-center justify-center`}
             >
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart data={allocationData}>
+                <PieChart>
                   <Pie
+                    data={allocationData}
                     dataKey="value"
                     cx="50%"
                     cy="50%"
                     outerRadius={120}
+                    innerRadius={60}
                     nameKey="name"
+                    paddingAngle={4}
                   >
                     {allocationData.map((entry: any, index: number) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={entry.color}
-                        strokeWidth={3}
-                        stroke="rgba(255,255,255,0.2)"
+                        strokeWidth={2}
+                        stroke="rgba(255,255,255,0.1)"
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip
+                    contentStyle={{
+                      background: "rgba(15,15,20,0.95)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "12px",
+                      color: "#fff",
+                    }}
+                    formatter={(value: any, name: string) => [`${value}%`, name]}
+                  />
+                  <Legend
+                    wrapperStyle={{ color: "#A1A1AA", fontSize: "12px", fontWeight: "bold" }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </motion.div>
@@ -1364,7 +1400,10 @@ export default function Dashboard() {
                 placeholder="Search investments..."
                 className={`${glass} rounded-2xl bg-white/5 border-white/10 text-white placeholder-slate-400`}
               />
-              <Button className="bg-gradient-to-r from-wine to-ruby hover:from-ruby hover:to-wine text-gold font-bold px-8 py-6 rounded-2xl shadow-2xl hover:shadow-wine/20 transition-all">
+              <Button 
+                onClick={handleInvestNow}
+                className="bg-gradient-to-r from-wine to-ruby hover:from-ruby hover:to-wine text-gold font-bold px-8 py-6 rounded-2xl shadow-2xl hover:shadow-wine/20 transition-all font-black"
+              >
                 Invest Now
               </Button>
             </div>
@@ -1510,6 +1549,7 @@ export default function Dashboard() {
           >
             <Button
               size="lg"
+              onClick={handleInvestNow}
               className="bg-gradient-to-r from-emerald to-gold hover:from-gold hover:to-emerald text-slate-900 font-black px-12 py-8 rounded-3xl shadow-2xl hover:shadow-emerald/25 text-lg"
             >
               <BarChart3 className="w-5 h-5 mr-2" />

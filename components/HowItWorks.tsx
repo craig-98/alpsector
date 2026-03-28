@@ -57,7 +57,8 @@ export default function HowItWorks() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {steps.map((step, index) => (
+          {steps.map((step
+          , index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 50 }}

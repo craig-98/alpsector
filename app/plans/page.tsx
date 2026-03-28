@@ -323,78 +323,88 @@ export default function PlansPage() {
 
 
   return (
-    <div className="min-h-screen bg-dark-grey-50 pt-[80px]">
+    <div className="min-h-screen bg-brand-dark pt-[80px] relative overflow-hidden">
+      {/* Background accents */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-wine-500/5 rounded-full blur-[100px] pointer-events-none" />
+
       {/* Hero Banner */}
-      <section className="bg-gradient-to-r from-black to-dark-grey-900 text-white py-20 sm:py-28 md:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center relative z-10">
-          <nav className="text-dark-grey-300 text-base sm:text-lg mb-4 inline-block">
-            Home <span className="mx-2">/</span> Plans
-          </nav>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 drop-shadow-2xl leading-tight">
-            INVESTMENT PLANS
-          </h1>
+      <section className="relative py-24 sm:py-32 overflow-hidden border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
+          <motion.nav 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-brand-muted text-sm uppercase font-black tracking-[0.3em] mb-6 inline-block"
+          >
+            Home <span className="mx-3 opacity-30">/</span> Plans
+          </motion.nav>
+          <motion.h1 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-6xl sm:text-8xl font-black mb-8 tracking-tighter bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent"
+          >
+            Investment Plans
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-xl text-brand-muted max-w-2xl mx-auto font-medium"
+          >
+            Premium asset classes tailored for institutional-grade growth. Choose your path to financial freedom.
+          </motion.p>
         </div>
       </section>
 
-      <div className="max-w-[1200px] mx-auto px-6 -mt-20 relative z-10 space-y-24 pb-24">
+      <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-10 space-y-32 pb-32">
         {/* Asset Filter Buttons */}
-        <div className="bg-white/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl">
-          <div className="flex flex-wrap gap-4 justify-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-panel p-8 rounded-[3rem] border border-white/10 shadow-2xl overflow-x-auto no-scrollbar"
+        >
+          <div className="flex gap-4 justify-between min-w-[1000px] lg:min-w-0">
             {assetClasses.map((asset) => {
               const Icon = asset.icon
               return (
                 <motion.button
                   key={asset.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ y: -5 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setActiveAsset(asset.id)}
-                  className={`group relative p-6 rounded-3xl shadow-lg transition-all duration-300 flex flex-col items-center gap-3 min-w-[160px] ${
+                  className={`group relative p-6 rounded-[2rem] transition-all duration-300 flex flex-col items-center gap-4 min-w-[140px] flex-1 ${
                     activeAsset === asset.id
-                      ? 'bg-black text-white shadow-2xl shadow-wine-500/25'
-                      : 'bg-white text-dark-grey-900 hover:shadow-xl hover:shadow-dark-grey-200/50'
+                      ? 'bg-white/10 border border-white/20'
+                      : 'bg-transparent border border-transparent hover:bg-white/5'
                   }`}
                 >
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform ${activeAsset === asset.id 
-                    ? 'bg-white/20' 
-                    : 'bg-gradient-to-br from-wine-500 to-dark-grey-700'
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-500 ${activeAsset === asset.id 
+                    ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
+                    : 'bg-white/5 text-brand-muted group-hover:bg-white/10 group-hover:text-white'
                   }`}>
-                    <span className="text-2xl">{Icon}</span>
+                    {Icon}
                   </div>
-                  <span className="font-semibold text-sm uppercase tracking-wide">{asset.label}</span>
+                  <span className={`font-black text-[10px] uppercase tracking-[0.2em] transition-colors ${activeAsset === asset.id ? 'text-white' : 'text-brand-muted group-hover:text-white'}`}>
+                    {asset.label}
+                  </span>
                   {activeAsset === asset.id && (
                     <motion.div
-                      className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rounded-full shadow-lg border-4 border-dark-grey-100"
-                      layoutId="activeIndicator"
+                      layoutId="activeTab"
+                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-emerald-400 rounded-full"
                     />
                   )}
                 </motion.button>
               )
             })}
           </div>
-        </div>
-
-        {/* Introduction */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          className="text-center max-w-4xl mx-auto"
-        >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-6">
-            Our Investment Plans
-          </h2>
-          <p className="text-xl text-slate-600 leading-relaxed">
-            The plans we offer are specifically designed for you.
-            Choose an investment plan that fits your financial goals and start earning profits.
-          </p>
         </motion.div>
 
         {/* Plan Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {loading ? (
-            <div className="col-span-full flex flex-col items-center justify-center p-20 space-y-4">
-              <div className="w-16 h-16 border-4 border-wine-500 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-xl font-bold text-slate-900">Loading investment opportunities...</p>
+            <div className="col-span-full flex flex-col items-center justify-center p-20 space-y-6">
+              <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+              <p className="text-xl font-black text-white uppercase tracking-widest">Scanning Markets...</p>
             </div>
           ) : (
             currentPlans.map((plan, index) => (
@@ -402,137 +412,145 @@ export default function PlansPage() {
                 key={plan.name + index}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -6, transition: { duration: 0.3 } }}
-                className={`bg-white rounded-[14px] shadow-[0_10px_25px_rgba(0,0,0,0.08)] hover:shadow-[0_18px_40px_rgba(0,0,0,0.15)] transition-all duration-300 overflow-hidden cursor-pointer border ${selectedPlan === index ? 'ring-4 ring-wine-500/20 border-wine-500' : 'hover:border-transparent'}`}
+                whileHover={{ y: -10 }}
+                className={`group relative glass-panel rounded-[3rem] p-10 border transition-all duration-500 ${selectedPlan === index ? 'border-emerald-500/50 bg-emerald-500/5 shadow-2xl shadow-emerald-500/10' : 'border-white/5 hover:border-white/20'}`}
                 onClick={() => setSelectedPlan(index)}
               >
-                <div 
-                  className={`h-[70px] sm:h-[90px] rounded-t-[14px] ${headerColors[index] || headerColors[0]}`}
-                />
-                <div className="relative -mt-6 sm:-mt-8">
-                  <div className="w-16 sm:w-20 h-16 sm:h-20 mx-auto bg-gradient-to-br from-black to-dark-grey-900 rounded-2xl shadow-2xl flex items-center justify-center border-4 border-white">
-                    {plan.icon ? <plan.icon className="w-8 sm:w-10 h-8 sm:h-10 text-white drop-shadow-lg" /> : <TrendingUp className="w-8 sm:w-10 h-8 sm:h-10 text-white drop-shadow-lg" />}
+                <div className="flex justify-between items-start mb-10">
+                  <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br from-white/10 to-transparent border border-white/10 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform`}>
+                    {plan.icon ? <plan.icon className="w-10 h-10 text-white" /> : <TrendingUp className="w-10 h-10 text-white" />}
+                  </div>
+                  <div className="bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
+                    <span className="text-emerald-400 font-black text-sm">{plan.apy}% APY</span>
                   </div>
                 </div>
-                <div className="p-6 sm:p-[30px]">
-                  <h3 className="text-lg sm:text-[20px] font-semibold text-[#111827] mb-3 leading-tight">
-                    {plan.name}
-                  </h3>
-                  <p className="text-[#374151] font-bold text-base sm:text-lg mb-4">
-                    {plan.apy}% APY
-                  </p>
-                  <div className="mb-6">
-                    <p className="text-sm font-medium text-[#4b5563] uppercase tracking-wide mb-1">
-                      Minimum Investment
-                    </p>
-                    <p className="text-xl font-semibold text-[#111827]">
-                      ${plan.min} - ${plan.max === Infinity ? '+' : plan.max.toLocaleString()}
+
+                <h3 className="text-2xl font-black text-white mb-4 tracking-tight leading-tight uppercase italic underline decoration-emerald-500/30">
+                  {plan.name}
+                </h3>
+                
+                <p className="text-brand-muted font-medium text-sm leading-relaxed mb-10">
+                  {plan.desc}
+                </p>
+
+                <div className="space-y-6 mb-12">
+                  <div className="p-5 rounded-2xl bg-white/5 border border-white/5 group-hover:bg-white/10 transition-colors">
+                    <p className="text-[10px] font-black text-brand-muted uppercase tracking-widest mb-1">Threshold</p>
+                    <p className="text-xl font-black text-white">
+                      ${plan.min.toLocaleString()} <span className="text-brand-muted text-sm mx-2">to</span> ${plan.max === Infinity ? 'Unlimited' : plan.max.toLocaleString()}
                     </p>
                   </div>
-                  <p className="text-[#4b5563] leading-relaxed mb-8">
-                    {plan.desc}
-                  </p>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleInvest(plan);
-                    }}
-                    className="w-full px-[22px] py-[10px] border border-[#9ca3af] bg-transparent rounded-lg text-[#4b5563] font-medium hover:bg-[#374151] hover:text-white hover:border-transparent transition-all duration-300 uppercase tracking-wide text-sm"
-                  >
-                    Invest Now
-                  </button>
                 </div>
+
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleInvest(plan);
+                  }}
+                  className={`w-full py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-sm transition-all relative overflow-hidden group/btn ${
+                    selectedPlan === index 
+                      ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-500/20' 
+                      : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+                  }`}
+                >
+                  <span className="relative z-10">Invest Now</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-cyan-400 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                </button>
               </motion.div>
             )))
           }
         </div>
 
         {/* Sophisticated Calculator */}
-        <section className="max-w-4xl mx-auto">
+        <section className="max-w-5xl mx-auto">
           <motion.div 
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-12 border border-white/50"
+            className="glass-panel rounded-[4rem] p-12 sm:p-20 border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative overflow-hidden"
           >
-            <h3 className="text-3xl sm:text-4xl font-black text-slate-900 text-center mb-8 sm:mb-12">
-              Investment Calculator
-            </h3>
-            <div className="grid lg:grid-cols-2 gap-12 items-start">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+            
+            <div className="text-center mb-16 sm:mb-20">
+              <h3 className="text-5xl sm:text-7xl font-black text-white mb-6 tracking-tighter">
+                Profit Engine
+              </h3>
+              <p className="text-lg text-brand-muted font-medium">Model your wealth trajectory with precision analytics.</p>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-20 items-center">
               {/* Inputs */}
-              <div className="space-y-6">
-                <div>
-                <label className="block text-base sm:text-lg font-semibold text-slate-700 mb-3 sm:mb-4">
-                    Investment Plan
+              <div className="space-y-10">
+                <div className="group">
+                  <label className="block text-[10px] font-black text-brand-muted uppercase tracking-[0.3em] mb-4 group-hover:text-emerald-400 transition-colors">
+                    Selected Strategy
                   </label>
                   <select 
                     value={selectedPlan}
                     onChange={(e) => setSelectedPlan(parseInt(e.target.value))}
-                    className="w-full p-4 sm:p-6 rounded-2xl border-2 border-slate-200 text-base sm:text-xl bg-slate-50 focus:border-emerald-500 focus:ring-4 ring-emerald-500/20 transition-all font-semibold min-h-[48px]"
+                    className="w-full bg-white/5 border border-white/10 rounded-3xl p-6 text-xl text-white font-black appearance-none focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all cursor-pointer"
                   >
                     {currentPlans.map((plan, index) => (
-                      <option key={plan.name} value={index}>{plan.name}</option>
+                      <option key={plan.name} value={index} className="bg-brand-surface">{plan.name}</option>
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-base sm:text-lg font-semibold text-slate-700 mb-3 sm:mb-4">
-                    Investment Amount
+
+                <div className="group">
+                  <label className="block text-[10px] font-black text-brand-muted uppercase tracking-[0.3em] mb-4 group-hover:text-emerald-400 transition-colors">
+                    Deployment Amount (USD)
                   </label>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="$1,000"
-                    className="w-full p-4 sm:p-6 rounded-2xl border-2 border-slate-200 text-lg sm:text-2xl bg-slate-50 focus:border-emerald-500 focus:ring-4 ring-emerald-500/20 transition-all font-semibold text-right min-h-[48px]"
-                    min={currentPlan.min}
-                    step="50"
-                  />
-                  <p className="text-xs sm:text-sm text-slate-500 mt-2">
-                    Min: ${currentPlan.min.toLocaleString()}
-                  </p>
+                  <div className="relative">
+                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-white/20">$</span>
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="5,000"
+                      className="w-full bg-white/5 border border-white/10 rounded-3xl p-6 pl-12 text-3xl text-white font-black focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all text-right"
+                      min={currentPlan.min}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-base sm:text-lg font-semibold text-slate-700 mb-3 sm:mb-4">
-                    Investment Duration
-                  </label>
+
+                <div className="space-y-6">
+                  <div className="flex justify-between items-end">
+                    <label className="text-[10px] font-black text-brand-muted uppercase tracking-[0.3em]">Temporal Duration</label>
+                    <span className="text-2xl font-black text-emerald-400">{durationDays} Days</span>
+                  </div>
                   <input
                     type="range"
                     min="7"
                     max="365"
                     value={durationDays}
                     onChange={(e) => setDurationDays(parseInt(e.target.value))}
-                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:cursor-pointer"
+                    className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-emerald-500"
                   />
-                  <div className="flex justify-between text-xs sm:text-sm text-slate-500 mt-2">
-                    <span>7 days</span>
-                    <span>{durationDays} days</span>
-                    <span>1 year</span>
-                  </div>
                 </div>
               </div>
 
               {/* Results */}
-              <div className="space-y-6 bg-gradient-to-br from-emerald-50/50 to-blue-50/50 rounded-2xl p-8 border border-emerald-200/50">
-                <div className="text-center">
-                  <p className="text-2xl font-semibold text-slate-700 mb-2">
-                    Projected Returns
-                  </p>
-                  <div className="space-y-4">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-emerald-500/10 blur-[60px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative glass-panel rounded-[3rem] p-10 border border-white/10 bg-white/5 space-y-10">
+                  <div className="text-center group/item">
+                    <p className="text-[10px] font-black text-brand-muted uppercase tracking-[0.3em] mb-4 group-hover/item:text-emerald-400 transition-colors">Total Accrued Profit</p>
+                    <p className="text-6xl sm:text-7xl font-black text-emerald-400 drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                      {formatCurrency(profit)}
+                    </p>
+                  </div>
+                  
+                  <div className="h-px bg-white/10" />
+                  
+                  <div className="grid grid-cols-2 gap-8">
                     <div className="text-center">
-                      <p className="text-sm text-slate-500 uppercase tracking-wide">Daily Profit</p>
-                      <p className="text-4xl font-black text-emerald-600">
+                      <p className="text-[10px] font-black text-brand-muted uppercase tracking-[0.3em] mb-2">Daily Yield</p>
+                      <p className="text-2xl font-black text-white">
                         {formatCurrency(profit / durationDays)}
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-sm text-slate-500 uppercase tracking-wide">Total Profit</p>
-                      <p className="text-5xl font-black text-emerald-600 bg-emerald-100/50 rounded-2xl p-6">
-                        {formatCurrency(profit)}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm text-slate-500 uppercase tracking-wide">Total Return</p>
-                      <p className="text-4xl font-black text-blue-600">
+                      <p className="text-[10px] font-black text-brand-muted uppercase tracking-[0.3em] mb-2">End Value</p>
+                      <p className="text-2xl font-black text-white">
                         {formatCurrency(totalReturn)}
                       </p>
                     </div>
@@ -540,14 +558,15 @@ export default function PlansPage() {
                 </div>
               </div>
             </div>
-            <div className="text-center mt-12">
-                <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
+
+            <div className="text-center mt-20">
+              <motion.button
+                whileHover={{ scale: 1.05, y: -5 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => handleInvest(currentPlan)}
-                className="bg-gradient-to-r from-black to-dark-grey-900 hover:from-dark-grey-900 hover:to-black text-white font-black text-xl px-12 py-6 rounded-2xl shadow-2xl hover:shadow-black/50 transition-all duration-300 uppercase tracking-wide"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-2xl px-16 py-8 rounded-[2rem] shadow-[0_20px_40px_-10px_rgba(16,185,129,0.4)] transition-all uppercase tracking-[0.2em]"
               >
-                Start Investing
+                Initiate Position
               </motion.button>
             </div>
           </motion.div>
@@ -555,22 +574,30 @@ export default function PlansPage() {
 
         {/* How It Works */}
         <section className="py-24">
-          <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 text-center mb-12 sm:mb-16">
-            How It Works
-          </h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="text-center mb-20 space-y-4">
+            <h3 className="text-5xl sm:text-7xl font-black text-white tracking-tighter uppercase italic decoration-emerald-500/30 underline underline-offset-8">
+              Protocol
+            </h3>
+            <p className="text-xl text-brand-muted font-medium">Simplified 6-step lifecycle for every asset class.</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {steps.map((step, index) => (
               <motion.div 
                 key={step.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                className="group text-center p-8 rounded-3xl bg-white shadow-xl hover:shadow-2xl border border-slate-200 hover:border-emerald-200 transition-all duration-500 hover:bg-emerald-50"
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+                className="group glass-panel p-10 rounded-[3rem] border border-white/5 hover:border-emerald-500/30 transition-all text-center"
               >
-                <div className="w-24 h-24 mx-auto mb-8 rounded-2xl bg-gradient-to-r from-black to-dark-grey-900 shadow-2xl group-hover:scale-110 transition-all duration-300 flex items-center justify-center">
-                  <step.icon className="w-12 h-12 text-white font-bold" />
+                <div className="w-20 h-20 mx-auto mb-8 rounded-[1.5rem] bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                  <step.icon className="w-10 h-10 text-emerald-400" />
                 </div>
-                <h4 className="text-2xl font-bold text-slate-900 mb-4">{step.title}</h4>
-                <p className="text-slate-600 leading-relaxed">{step.desc}</p>
+                <h4 className="text-2xl font-black text-white mb-4 uppercase tracking-tighter">{step.title}</h4>
+                <p className="text-brand-muted font-medium text-sm leading-relaxed">{step.desc}</p>
+                <div className="mt-8 text-[4rem] font-black text-white/[0.02] absolute bottom-4 right-8 pointer-events-none group-hover:text-emerald-500/[0.05] transition-colors">
+                  0{index + 1}
+                </div>
               </motion.div>
             ))}
           </div>
