@@ -1,131 +1,254 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
 
-    // Listen for storage changes (e.g., when user logs in from another tab/page)
     const handleStorageChange = () => {
-      const newToken = localStorage.getItem('token');
+      const newToken = localStorage.getItem("token");
       setIsLoggedIn(!!newToken);
     };
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
 
-    // Also listen for custom event when user logs in within the same page
     const handleLogin = () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       setIsLoggedIn(!!token);
     };
-    window.addEventListener('user-logged-in', handleLogin);
+    window.addEventListener("user-logged-in", handleLogin);
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('user-logged-in', handleLogin);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("user-logged-in", handleLogin);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     setIsLoggedIn(false);
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
-  // Don't render until mounted to avoid hydration mismatch
   if (!mounted) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-dark-grey-100/95 backdrop-blur-md border-b border-dark-grey-300 py-2 sm:py-3">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <img src="/alpsectorlogo.PNG" alt="Alpsector Logo" className="w-12 sm:w-16 h-12 sm:h-16 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl object-contain ring-4 ring-slate-200/50 border border-white/50" />
-              <span className="text-lg sm:text-xl font-black text-black tracking-tight">Alpsector</span>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <nav className="fixed top-0 left-0 right-0 z-50 h-[72px] bg-brand-dark border-b border-brand-border"></nav>
     );
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-dark-grey-100/95 backdrop-blur-md border-b border-dark-grey-300 py-2 sm:py-3">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 100, damping: 20 }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-brand-dark/70 backdrop-blur-2xl border-b border-white/[0.05] shadow-glass py-3"
+          : "bg-transparent py-5"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            <img src="/alpsectorlogo.PNG" alt="Alpsector Logo" className="w-12 sm:w-16 h-12 sm:h-16 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl object-contain ring-4 ring-slate-200/50 border border-white/50" />
-            <span className="text-lg sm:text-xl font-black text-black tracking-tight">Alpsector</span>
-          </div>
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-emerald-500 rounded-xl blur-md opacity-40 group-hover:opacity-70 transition-opacity" />
+              <img
+                src="/alpsectorlogo.PNG"
+                alt="Alpsector Logo"
+                className="w-10 h-10 sm:w-12 sm:h-12 relative bg-brand-surface rounded-xl shadow-2xl object-contain ring-1 ring-white/10"
+              />
+            </div>
+            <span className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              Alpsector
+            </span>
+          </Link>
 
           {/* Nav Links */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-black hover:text-wine-600 font-bold transition-colors text-sm sm:text-base">Home</Link>
-            <Link href="/plans" className="text-black hover:text-wine-600 font-bold transition-colors text-sm sm:text-base">Plans</Link>
-            <Link href="/dashboard" className="text-black hover:text-wine-600 font-bold transition-colors text-sm sm:text-base">Dashboard</Link>
-            <Link href="/about" className="text-black hover:text-wine-600 font-bold transition-colors text-sm sm:text-base">About</Link>
-            <Link href="/faq" className="text-black hover:text-wine-600 font-bold transition-colors text-sm sm:text-base">FAQ</Link>
+          <div className="hidden md:flex items-center space-x-8 bg-brand-surface/50 px-6 py-2.5 rounded-full border border-white/5 backdrop-blur-md">
+            <Link
+              href="/"
+              className="text-brand-muted hover:text-white font-medium transition-colors text-sm"
+            >
+              Home
+            </Link>
+            <Link
+              href="/plans"
+              className="text-brand-muted hover:text-white font-medium transition-colors text-sm"
+            >
+              Plans
+            </Link>
+            <Link
+              href="/dashboard"
+              className="text-brand-muted hover:text-white font-medium transition-colors text-sm"
+            >
+              Dashboard
+            </Link>
+            {isLoggedIn && (
+              <Link
+                href="/wallet"
+                className="text-brand-muted hover:text-white font-medium transition-colors text-sm"
+              >
+                Wallet
+              </Link>
+            )}
+            <Link
+              href="/about"
+              className="text-brand-muted hover:text-white font-medium transition-colors text-sm"
+            >
+              About
+            </Link>
+            <Link
+              href="/faq"
+              className="text-brand-muted hover:text-white font-medium transition-colors text-sm"
+            >
+              FAQ
+            </Link>
           </div>
 
           {/* CTA - Show based on login status */}
           {isLoggedIn ? (
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <Link href="/dashboard" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 sm:px-6 py-2.5 font-bold rounded-lg shadow-lg transition-all duration-200 min-h-[44px]">
-                My Account
-              </Link>
-              <button 
+            <div className="hidden md:flex items-center space-x-4">
+              <button
                 onClick={handleLogout}
-                className="text-black hover:text-wine-600 px-3 sm:px-4 py-2 font-bold transition-colors rounded-lg hover:bg-dark-grey-200 text-sm"
+                className="text-brand-muted hover:text-white px-4 py-2 font-medium transition-colors rounded-lg hover:bg-white/5 text-sm"
               >
                 Logout
               </button>
+              <Link href="/dashboard" className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-lg blur opacity-40 group-hover:opacity-100 transition duration-200"></div>
+                <div className="relative bg-brand-dark px-6 py-2.5 rounded-lg flex items-center justify-center font-bold text-white text-sm transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] group-hover:bg-brand-surface">
+                  My Account
+                </div>
+              </Link>
             </div>
           ) : (
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <Link href="/login" className="text-black hover:text-wine-600 px-3 sm:px-4 py-2 font-bold transition-colors rounded-lg hover:bg-dark-grey-200 text-sm">Login</Link>
-              <Link href="/register" className="bg-white/80 backdrop-blur-xl hover:bg-white/90 text-black px-4 sm:px-6 py-2.5 font-bold rounded-lg shadow-lg hover:shadow-slate-900/20 border border-white/50 transition-all duration-200 min-h-[44px]">
-                Get Started
+            <div className="hidden md:flex items-center space-x-4">
+              <Link
+                href="/login"
+                className="text-brand-muted hover:text-white px-4 py-2 font-medium transition-colors rounded-lg hover:bg-white/5 text-sm"
+              >
+                Sign In
+              </Link>
+              <Link href="/register" className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-200"></div>
+                <div className="relative bg-emerald-500 hover:bg-emerald-400 px-6 py-2.5 rounded-lg flex items-center justify-center font-bold text-white text-sm transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]">
+                  Get Started
+                </div>
               </Link>
             </div>
           )}
 
           {/* Mobile Menu */}
-          <Sheet>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <button className="md:hidden p-2 font-bold text-xl rounded-2xl hover:bg-dark-grey-200 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center text-black hover:scale-110">
-                <Menu className="w-8 h-8" />
+              <button className="md:hidden p-2 text-brand-muted hover:text-white transition-colors rounded-lg hover:bg-white/5 relative z-50">
+                <Menu className="w-6 h-6" />
               </button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-white/90 backdrop-blur-xl border-dark-grey-200 p-8 w-[320px]">
-              <nav className="space-y-6 mt-8">
-                <Link href="/" className="block py-3 px-4 text-lg font-bold hover:bg-dark-grey-100 rounded-xl transition-all">Home</Link>
-                <Link href="/plans" className="block py-3 px-4 text-lg font-bold hover:bg-dark-grey-100 rounded-xl transition-all">Plans</Link>
-                <Link href="/dashboard" className="block py-3 px-4 text-lg font-bold hover:bg-dark-grey-100 rounded-xl transition-all">Dashboard</Link>
-                <Link href="/about" className="block py-3 px-4 text-lg font-bold hover:bg-dark-grey-100 rounded-xl transition-all">About</Link>
-                <Link href="/faq" className="block py-3 px-4 text-lg font-bold hover:bg-dark-grey-100 rounded-xl transition-all">FAQ</Link>
-                <div className="pt-8 border-t border-dark-grey-200">
+            <SheetContent
+              side="right"
+              className="bg-brand-dark/95 backdrop-blur-2xl border-l border-white/5 p-8 w-[320px] sm:w-[400px]"
+            >
+              <nav className="space-y-4 mt-12 flex flex-col">
+                <Link
+                  href="/"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-4 px-4 text-lg font-medium text-brand-muted hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/plans"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-4 px-4 text-lg font-medium text-brand-muted hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                >
+                  Plans
+                </Link>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-4 px-4 text-lg font-medium text-brand-muted hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                >
+                  Dashboard
+                </Link>
+                {isLoggedIn && (
+                  <Link
+                    href="/wallet"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block py-4 px-4 text-lg font-medium text-brand-muted hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                  >
+                    Wallet
+                  </Link>
+                )}
+                <Link
+                  href="/about"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-4 px-4 text-lg font-medium text-brand-muted hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                >
+                  About
+                </Link>
+                <Link
+                  href="/faq"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-4 px-4 text-lg font-medium text-brand-muted hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                >
+                  FAQ
+                </Link>
+
+                <div className="pt-8 mt-4 border-t border-white/10 flex flex-col gap-4">
                   {isLoggedIn ? (
                     <>
-                      <Link href="/dashboard" className="block w-full text-center py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all mb-3">My Account</Link>
-                      <button 
-                        onClick={handleLogout}
-                        className="block w-full text-center py-3 bg-black text-white font-bold rounded-xl hover:bg-dark-grey-900 transition-all"
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block w-full text-center py-4 bg-emerald-500/10 text-emerald-400 font-bold rounded-xl border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                      >
+                        My Account
+                      </Link>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="block w-full text-center py-4 bg-white/5 text-white font-bold rounded-xl hover:bg-white/10 transition-all"
                       >
                         Logout
                       </button>
                     </>
                   ) : (
                     <>
-                      <Link href="/login" className="block w-full text-center py-3 bg-black text-white font-bold rounded-xl hover:bg-dark-grey-900 transition-all mb-3">Login</Link>
-                      <Link href="/register" className="block w-full text-center py-3 bg-white text-black font-bold rounded-xl shadow-lg border border-dark-grey-200 hover:shadow-xl transition-all">Get Started</Link>
+                      <Link
+                        href="/login"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block w-full text-center py-4 bg-white/5 text-white font-bold rounded-xl hover:bg-white/10 transition-all"
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/register"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block w-full text-center py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all"
+                      >
+                        Get Started
+                      </Link>
                     </>
                   )}
                 </div>
@@ -134,6 +257,6 @@ export default function Header() {
           </Sheet>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 }

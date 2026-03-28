@@ -20,9 +20,9 @@ export default function MobileBottomNav({ active }: MobileBottomNavProps) {
 
   return (
     <motion.div
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-dark-grey-200 shadow-2xl"
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
+      className="md:hidden fixed bottom-6 left-4 right-4 z-50 bg-black/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden shadow-2xl"
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
       <nav className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-evenly">
@@ -31,15 +31,15 @@ export default function MobileBottomNav({ active }: MobileBottomNavProps) {
             key={tab.key}
             href={tab.href}
             className={`
-              p-3 rounded-2xl flex flex-col items-center gap-1 transition-all duration-200 group
+              p-3 rounded-2xl flex flex-col items-center gap-1.5 transition-all duration-300 group
               ${active === tab.key 
-                ? 'bg-gradient-to-r from-wine-500 to-black text-white shadow-2xl shadow-wine-500/25 scale-105' 
-                : 'text-dark-grey-700 hover:text-black hover:scale-110 hover:bg-dark-grey-100'
+                ? 'bg-emerald-500/20 text-emerald-400 shadow-lg border border-emerald-500/20' 
+                : 'text-brand-muted hover:text-white hover:bg-white/5 border border-transparent'
               }
             `}
           >
-            <tab.icon className={`w-6 h-6 group-hover:scale-110 ${active === tab.key ? 'drop-shadow-lg' : ''}`} />
-            <span className="text-xs font-bold uppercase tracking-wide">{tab.label}</span>
+            <tab.icon className={`w-5 h-5 group-hover:scale-110 transition-transform ${active === tab.key ? 'drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]' : ''}`} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">{tab.label}</span>
           </Link>
         ))}
       </nav>

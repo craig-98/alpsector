@@ -18,13 +18,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
+    <html lang="en" suppressHydrationWarning className="dark">
+      <body className={`${inter.className} min-h-screen bg-brand-dark text-brand-text antialiased selection:bg-emerald-500/30 selection:text-emerald-200`}>
+        {/* Subtle mesh gradient background overlay */}
+        <div className="fixed inset-0 bg-mesh-dark mix-blend-screen pointer-events-none opacity-40 z-[-1]" />
+        
         <Header />
-        <main className="pt-12 sm:pt-14 min-h-screen bg-dark-grey-50">
+        <main className="pt-16 sm:pt-20 min-h-screen relative z-0 flex flex-col">
           {children}
         </main>
-        <Toaster />
+        <Toaster theme="dark" position="bottom-right" />
       </body>
     </html>
   );

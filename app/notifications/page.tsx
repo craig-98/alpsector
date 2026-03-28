@@ -92,10 +92,10 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="text-center p-8">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-          <p className="text-xl font-bold text-gray-700">Loading notifications...</p>
+      <div className="min-h-screen flex items-center justify-center bg-brand-dark">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="text-center p-8 relative z-10 glass-panel rounded-3xl">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-r-2 border-emerald-500 border-b-transparent border-l-transparent mx-auto mb-6"></div>
         </div>
       </div>
     );

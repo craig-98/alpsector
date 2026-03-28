@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Inter } from 'next/font/google'
 import Ticker from '@/components/Ticker'
 import AssetSlider from '@/components/AssetSlider'
 import AssetClasses from '@/components/AssetClasses'
@@ -10,15 +9,8 @@ import SecurityTrust from '@/components/SecurityTrust'
 import Testimonials from '@/components/Testimonials'
 import FAQ from '@/components/FAQ'
 import Footer from '@/components/Footer'
-import { getDashboard } from '@/lib/api'
-import { initSocket } from '@/lib/socket'
-
-
-
-
-const inter = Inter({ subsets: ['latin'] })
-
 import { assets } from '@/lib/api'
+import { initSocket } from '@/lib/socket'
 
 export default function Home() {
   const [time, setTime] = useState('')
@@ -49,12 +41,11 @@ export default function Home() {
       setMarkets([...formattedStocks, ...formattedEtfs]);
     } catch (err) {
       console.error('Failed to fetch markets:', err);
-      // Fallback to dummy if API fails
       setMarkets([
-        { name: 'SILVER', price: 22.89, change: 0.12, positive: true },
-        { name: 'OIL', price: 78.34, change: -1.23, positive: false },
-        { name: 'SPY', price: 4987.23, change: 0.67, positive: true },
-        { name: 'NASDAQ', price: 15678.45, change: -0.34, positive: false },
+        { name: 'BTC', price: 64289.45, change: 2.12, positive: true },
+        { name: 'ETH', price: 3478.22, change: -1.23, positive: false },
+        { name: 'SPY', price: 512.23, change: 0.67, positive: true },
+        { name: 'NASDAQ', price: 18123.45, change: 1.34, positive: true },
       ]);
     }
   };
@@ -62,7 +53,6 @@ export default function Home() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     setIsAuthenticated(!!token)
-
     initSocket()
     fetchMarkets()
   }, [])
@@ -78,151 +68,138 @@ export default function Home() {
   }, [])
 
   return (
-    <div className={inter.className}>
-      {/* Market Ticker - Moved Lower */}
-      <div className="sticky top-20 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-white text-xs overflow-hidden mt-4">
-        <div className="flex items-center px-6 py-3">
-          <div className="mr-8 font-mono text-sm">
+    <div className="relative overflow-hidden w-full">
+      {/* Dynamic Background */}
+      <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[800px] h-[800px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[20%] left-0 -translate-x-1/3 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Market Ticker - Upgraded */}
+      <div className="fixed top-16 sm:top-[80px] left-0 right-0 z-40 bg-brand-dark/90 backdrop-blur-xl border-b border-white/[0.08] text-white text-xs shadow-glass">
+        <div className="flex items-center px-4 sm:px-6 py-2 sm:py-3 max-w-7xl mx-auto w-full overflow-hidden">
+          <div className="mr-8 font-mono text-sm text-brand-muted tracking-wider hidden md:block shrink-0">
             {time}
           </div>
-          <div className="mr-6 font-bold text-emerald-400">
-            Markets ↑ Open
+          <div className="mr-6 font-bold text-emerald-400 flex items-center gap-2 shrink-0">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="hidden sm:inline">MARKETS LIVE</span>
+            <span className="sm:hidden">LIVE</span>
           </div>
-          <Ticker markets={markets} />
-          <div className="ml-6 text-emerald-400 animate-pulse">Live ●</div>
+          <div className="flex-1 overflow-hidden">
+            <Ticker markets={markets} />
+          </div>
         </div>
       </div>
 
-
-
-      {/* 3. Hero Section */}
-      <section className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-32">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex flex-col justify-center py-20 lg:py-32">
+        <div className="max-w-7xl mx-auto px-6 grid xl:grid-cols-2 gap-16 lg:gap-20 items-center w-full">
           {/* Left - Content */}
           <motion.div 
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-8 relative z-10"
           >
             {/* Announcement Badge */}
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-flex items-center px-6 py-3 bg-slate-200 rounded-full text-sm font-medium text-slate-700 shadow-lg max-w-max"
+              className="inline-flex items-center px-4 py-2 bg-white/[0.03] backdrop-blur-md rounded-full text-sm font-medium border border-white/10 shadow-glass text-brand-text w-max"
             >
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              New: Real Estate Investments Now Available
+              <div className="bg-emerald-500/20 text-emerald-400 p-1 rounded-full mr-3">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 font-bold">
+                Level Up: Institutional Yields Access
+              </span>
             </motion.div>
 
             {/* Headline */}
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight text-slate-900"
-            >
-              Invest In The{' '}
-              <span className="bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
-                Future
-              </span>
-              , One Asset At A Time
-            </motion.h1>
+            <h1 className="text-[3.5rem] leading-[1] sm:text-6xl lg:text-[5rem] xl:text-[6rem] font-black tracking-tighter text-white drop-shadow-2xl">
+              Engineered for
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500"> Wealth </span>
+              Creation
+            </h1>
 
             {/* Description */}
-            <motion.p 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-lg sm:text-xl text-slate-600 leading-relaxed max-w-lg"
-            >
-              Earn more with expertly managed plans in crypto, stocks, real estate & more. 
-              Join thousands of investors building wealth with our secure, regulated platform.
-            </motion.p>
+            <p className="text-base sm:text-xl text-brand-muted leading-relaxed max-w-lg font-medium pr-4">
+              Alpsector bridges the gap between everyday investors and institutional-grade opportunities. Build your portfolio with Crypto, Equities, and Real Estate.
+            </p>
 
-            {/* Buttons */}
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4"
-            >
+            {/* Buttons Layout Bug Fix */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-max">
               <motion.a 
-                href={isAuthenticated ? '/plans' : '/register'}
-                whileHover={{ y: -3, scale: 1.02 }}
+                href={isAuthenticated ? '/dashboard' : '/register'}
                 whileTap={{ scale: 0.98 }}
-                className="px-10 py-5 bg-gray-900 text-white font-bold text-lg rounded-xl shadow-2xl hover:shadow-3xl hover:bg-gray-800 transition-all duration-300 flex-grow sm:flex-none inline-block text-center"
+                className="relative group w-full sm:w-auto"
               >
-                Get Started →
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-cyan-500 rounded-2xl blur opacity-70 group-hover:opacity-100 transition duration-300"></div>
+                <div className="relative px-8 py-5 bg-brand-surface/50 backdrop-blur-md rounded-xl hover:bg-transparent transition-colors duration-300 flex items-center justify-center gap-3">
+                  <span className="font-black text-white text-lg tracking-wide">
+                    {isAuthenticated ? 'Go to Dashboard' : 'Open Account'}
+                  </span>
+                  <svg className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </div>
               </motion.a>
+              
               <motion.a 
                 href="/plans"
-                whileHover={{ y: -3, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="px-10 py-5 bg-white border-2 border-black font-semibold text-lg rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center"
+                className="px-8 py-5 bg-white/[0.03] backdrop-blur-xl border border-white/10 font-bold text-lg rounded-xl shadow-glass hover:bg-white/[0.08] transition-all duration-300 flex items-center justify-center text-white w-full sm:w-auto"
               >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                </svg>
-                See Plans
+                View Plans
               </motion.a>
-            </motion.div>
+            </div>
 
             {/* Trust Indicators */}
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-              className="flex flex-wrap gap-8 items-center text-sm text-slate-500"
-            >
-              <div className="flex items-center">
-                <svg className="w-5 h-5 mr-2 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+            <div className="flex flex-wrap gap-6 items-center text-sm font-semibold text-brand-muted pt-8 border-t border-white/[0.05]">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                SEC Regulated
+                Bank-Grade Security
               </div>
-              <div className="flex items-center">
-                <svg className="w-5 h-5 mr-2 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                 </svg>
-                Bank-Level Security
+                100k+ Active Investors
               </div>
-              <div className="flex items-center">
-                <svg className="w-5 h-5 mr-2 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                50K+ Investors
-              </div>
-            </motion.div>
+            </div>
           </motion.div>
 
-          <AssetSlider markets={markets.map(m => ({
-            ...m,
-            labels: ['1m', '5m', '15m'],
-            data: [m.price - 50, m.price - 10, m.price]
-          }))} />
+          {/* Right - Asset Slider */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="relative z-10 lg:pl-10"
+          >
+            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-blue-500/20 blur-[100px] rounded-full -z-10" />
+            <AssetSlider markets={markets.map(m => ({
+              ...m,
+              labels: ['1m', '5m', '15m'],
+              data: [m.price - 50, m.price - 10, m.price]
+            }))} />
+          </motion.div>
         </div>
-
       </section>
 
-      {/* Asset Classes Section */}
+      {/* Components with updated styling will be below */}
       <AssetClasses />
-
-      {/* Security Trust Section */}
       <SecurityTrust />
-
-      {/* Testimonials Section */}
       <Testimonials />
-
-      {/* FAQ Section */}
       <FAQ />
       <Footer />
-
     </div>
   )
 }
-
-

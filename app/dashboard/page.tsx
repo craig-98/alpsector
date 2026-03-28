@@ -37,6 +37,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -95,36 +102,26 @@ import {
   investments as investmentsApi,
   auth,
   transactions,
+  apiFetch,
 } from "@/lib/api";
 
-// Light website theme matching tailwind.config.ts + layout
+// Dark website theme matching tailwind.config.ts + layout
 const theme = {
-  wine50: "#fdf2f2",
-  wine500: "#9c1b1e",
-  wine600: "#8b0000",
-  wine700: "#7a0f12",
-  wine900: "#2d0a0c",
-
-  "dark-grey": {
-    50: "#f9fafb",
-    100: "#f5f5f5",
-    300: "#d1d5db",
-    500: "#6b7280",
-    700: "#374151",
-    900: "#111827",
-  },
-  charcoal: "#0f0f23",
-  gold: "#D4AF37",
   emerald: "#10B981",
+  "brand-dark": "#0A0A0B",
+  "brand-surface": "#121214",
+  "brand-muted": "#A1A1AA",
+  gold: "#D4AF37",
   ruby: "#E0115F",
+  wine600: "#9F1239",
   slate: "#1e293b",
 };
 
-// Light glassmorphism matching website
+// Dark glassmorphism matching website
 const glass =
-  "bg-white/80 backdrop-blur-xl border border-dark-grey-200 shadow-lg rounded-3xl overflow-hidden";
+  "glass-panel";
 const glassHover =
-  "hover:shadow-xl hover:shadow-amber-500/20 hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 font-bold";
+  "glass-panel-hover font-bold";
 
 // Types for backend data
 interface UserProfile {
@@ -205,6 +202,9 @@ export default function Dashboard() {
   const [withdrawBank, setWithdrawBank] = useState("");
   const [withdrawAccountNumber, setWithdrawAccountNumber] = useState("");
   const [withdrawAccountName, setWithdrawAccountName] = useState("");
+  const [depositProof, setDepositProof] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
+  const [globalSettings, setGlobalSettings] = useState({ crypto: "BTC", address: "" });
 
   const formSchema = z.object({
     name: z.string().min(2),
@@ -233,7 +233,16 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
 
-      const dashboardData = await getDashboard();
+      const [dashboardData, cryptoInfo] = await Promise.all([
+        getDashboard(),
+        apiFetch("/crypto").catch(() => ({ data: { crypto: "BTC", address: "" } })),
+      ]);
+
+      if (cryptoInfo?.data) {
+        setGlobalSettings(cryptoInfo.data);
+        setDepositCrypto(cryptoInfo.data.crypto);
+        setDepositAddress(cryptoInfo.data.address);
+      }
 
       setProfile(
         Array.isArray(dashboardData.profile)
@@ -301,12 +310,11 @@ export default function Dashboard() {
   // Loading state
   if (!isAuthenticated || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="text-center p-8">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-          <p className="text-xl font-bold text-gray-700">
-            Loading dashboard...
-          </p>
+      <div className="min-h-screen flex items-center justify-center bg-brand-dark">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="text-center p-8 relative z-10 glass-panel rounded-3xl">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-r-2 border-emerald-500 border-b-transparent border-l-transparent mx-auto mb-6"></div>
+      
         </div>
       </div>
     );
@@ -315,13 +323,14 @@ export default function Dashboard() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="text-center p-8 max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-brand-dark">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="text-center p-8 relative z-10 glass-panel rounded-3xl max-w-md">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-700 mb-2">
+          <h2 className="text-2xl font-bold text-white mb-2">
             Unable to Load Dashboard
           </h2>
-          <p className="text-gray-500 mb-6">{error}</p>
+          <p className="text-brand-muted mb-6">{error}</p>
           <Button
             onClick={handleRefresh}
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -366,27 +375,46 @@ export default function Dashboard() {
         toast.error("Please enter a valid amount");
         return;
       }
-      if (depositMethod === "crypto") {
-        if (!depositCrypto || !depositAddress) {
-          toast.error("Please fill in cryptocurrency and wallet address");
-          return;
-        }
+      if (!globalSettings.address) {
+        toast.error("Deposit address not configured. Contact support.");
+        return;
       }
+      if (!depositProof) {
+        toast.error("Please upload proof of payment (screenshot/receipt)");
+        return;
+      }
+      
       await transactions.deposit(
         parseFloat(depositAmount),
         depositMethod,
-        undefined,
-        depositCrypto,
-        depositAddress,
+        depositProof,
+        globalSettings.crypto,
+        globalSettings.address,
       );
-      toast.success("Deposit request submitted!");
+      toast.success("Deposit request submitted! Admin will verify your proof.");
       setDepositOpen(false);
       setDepositAmount("");
-      setDepositCrypto("");
-      setDepositAddress("");
+      setDepositProof(null);
+      setProofPreview(null);
       fetchDashboardData();
     } catch (err: any) {
       toast.error(err.message || "Failed to submit deposit");
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size must be less than 10MB");
+        return;
+      }
+      setDepositProof(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProofPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -483,7 +511,7 @@ export default function Dashboard() {
     allocationData.push({
       name: "No Investments",
       value: 1,
-      color: theme["dark-grey"][300],
+      color: "#2C2C2E",
     });
   }
 
@@ -508,13 +536,13 @@ export default function Dashboard() {
     })) || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-grey-50 via-dark-grey-100 to-white text-black font-bold">
+    <div className="min-h-screen bg-brand-dark text-white font-sans">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className={`${glass} bg-white/90 border-dark-grey-200 max-w-2xl mx-auto text-black font-bold`}
+          className={`${glass} bg-brand-surface border-brand-border text-white font-bold`}
         >
           <DialogHeader>
-            <DialogTitle className="font-bold text-black">
+            <DialogTitle className="font-bold text-white">
               Profile Settings
             </DialogTitle>
             <DialogDescription>
@@ -524,7 +552,7 @@ export default function Dashboard() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4">
-                <h3 className="text-xl font-black text-black">
+                <h3 className="text-xl font-black text-white">
                   Personal Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -588,7 +616,7 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xl font-black text-black">
+                <h3 className="text-xl font-black text-white">
                   KYC Verification
                 </h3>
                 <div className="flex items-center space-x-4 p-4 bg-white/10 rounded-2xl">
@@ -605,7 +633,7 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xl font-bold text-black">
+                <h3 className="text-xl font-bold text-white">
                   Payment Methods
                 </h3>
                 <div className="space-y-2">
@@ -622,7 +650,7 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xl font-bold text-black">
+                <h3 className="text-xl font-bold text-white">
                   Notification Preferences
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -671,217 +699,270 @@ export default function Dashboard() {
       {/* Deposit Dialog */}
       <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
         <DialogContent
-          className={`${glass} bg-white/90 border-dark-grey-200 max-w-md mx-auto text-black font-bold`}
+          className={`${glass} bg-brand-surface border-brand-border text-white font-bold p-0 max-w-md w-full overflow-hidden rounded-3xl`}
         >
-          <DialogHeader>
-            <DialogTitle className="font-bold text-black">
-              Deposit Funds
-            </DialogTitle>
-            <DialogDescription>
-              Add funds to your wallet to start investing.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Amount (USD)</Label>
-              <Input
-                type="number"
-                placeholder="Enter amount"
-                className="mt-1"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Payment Method</Label>
-              <select
-                className="w-full mt-1 p-2 border rounded-lg bg-gray-50 text-gray-500"
-                value={depositMethod}
-                disabled
-              >
-                <option value="crypto">Cryptocurrency</option>
-              </select>
-            </div>
-            {depositMethod === "crypto" && (
-              <>
-                <div>
-                  <Label>Cryptocurrency</Label>
-                  <select
-                    className="w-full mt-1 p-2 border rounded-lg"
-                    value={depositCrypto}
-                    onChange={(e) => setDepositCrypto(e.target.value)}
-                  >
-                    <option value="">Select cryptocurrency</option>
-                    <option value="BTC">Bitcoin (BTC)</option>
-                    <option value="ETH">Ethereum (ETH)</option>
-                    <option value="USDT">Tether (USDT)</option>
-                    <option value="USDC">USD Coin (USDC)</option>
-                    <option value="BNB">Binance Coin (BNB)</option>
-                  </select>
-                </div>
-                <div>
-                  <Label>Wallet Address</Label>
+          <div className="max-h-[85vh] overflow-y-auto p-5 sm:p-8 custom-scrollbar">
+            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
+            <DialogHeader className="relative z-10 mb-4 sm:mb-6">
+              <DialogTitle className="text-2xl sm:text-3xl font-black text-white">
+                Deposit Funds
+              </DialogTitle>
+              <DialogDescription className="text-brand-muted text-xs sm:text-sm">
+                Add funds to your wallet to start investing.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 sm:space-y-5 relative z-10">
+              <div>
+                <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Amount (USD)</Label>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  className="w-full p-3 sm:p-4 h-auto bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Payment Method</Label>
+                <Select value={depositMethod} disabled>
+                  <SelectTrigger className="w-full p-3 sm:p-4 h-auto bg-white/5 border border-white/10 text-white font-bold rounded-2xl opacity-70">
+                    <SelectValue placeholder="Cryptocurrency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="crypto">Cryptocurrency</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {depositMethod === "crypto" && (
+                <>
+                  <div>
+                    <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Cryptocurrency Network</Label>
+                    <div className="w-full p-3 sm:p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold opacity-70 cursor-not-allowed text-sm">
+                      {globalSettings.crypto}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Official Deposit Address</Label>
+                    <div className="w-full p-3 sm:p-4 bg-white/5 border border-emerald-500/30 rounded-2xl text-emerald-400 font-mono text-[10px] sm:text-xs break-all leading-tight">
+                      {globalSettings.address || 'Address not configured.'}
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                <p className="text-xs text-brand-muted font-medium">
+                  <span className="text-emerald-400 font-bold">Important:</span> Send exactly the requested amount in{" "}
+                  <span className="text-white font-bold">{globalSettings.crypto}</span> to the address above. Your deposit will be credited after network confirmations.
+                </p>
+              </div>
+              <div className="pt-1">
+                <Label className="block text-[10px] font-bold text-brand-muted mb-2 uppercase tracking-wider">
+                  Upload Proof of Payment
+                </Label>
+                <div className="relative group">
                   <Input
-                    type="text"
-                    placeholder="Enter your wallet address"
-                    className="mt-1"
-                    value={depositAddress}
-                    onChange={(e) => setDepositAddress(e.target.value)}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="proof-upload"
                   />
+                  <label
+                    htmlFor="proof-upload"
+                    className={`flex flex-col items-center justify-center w-full min-h-[80px] sm:min-h-[120px] rounded-2xl sm:rounded-3xl border-2 border-dashed ${
+                      proofPreview ? "border-emerald-500/50 bg-emerald-500/5" : "border-white/10 hover:border-white/25 bg-white/5"
+                    } cursor-pointer transition-all p-3 sm:p-4 text-center overflow-hidden relative`}
+                  >
+                    {proofPreview ? (
+                      <div className="relative w-full h-full flex flex-col items-center gap-2">
+                        <img src={proofPreview} alt="Proof" className="w-full max-h-24 sm:max-h-40 object-contain rounded-xl shadow-2xl" />
+                        <p className="text-[10px] text-emerald-400 font-bold">File Selected - Click to Change</p>
+                      </div>
+                    ) : (
+                      <>
+                        <ArrowUpRight className="w-8 h-8 text-brand-muted mb-2 group-hover:scale-110 transition-transform" />
+                        <p className="text-sm font-bold text-white">Click to upload screenshot</p>
+                        <p className="text-xs text-brand-muted mt-1">PNG, JPG or PDF (MAX. 10MB)</p>
+                      </>
+                    )}
+                  </label>
                 </div>
-              </>
-            )}
-            <div className="p-4 bg-gray-100 rounded-lg">
-              <p className="text-sm text-gray-600">
-                <strong>Note:</strong> After payment, upload your receipt for
-                verification.
-              </p>
+              </div>
             </div>
+            <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6 relative z-10">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDepositOpen(false);
+                  setProofPreview(null);
+                  setDepositProof(null);
+                }}
+                className="flex-1 rounded-xl bg-transparent border-white/10 text-white hover:bg-white/5 font-bold h-10 sm:h-12 text-sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeposit}
+                disabled={!globalSettings.address || !depositProof}
+                className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all h-10 sm:h-12 text-sm disabled:opacity-50"
+              >
+                Submit Proof
+              </Button>
+            </DialogFooter>
           </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDepositOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleDeposit}>Continue to Payment</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Withdraw Dialog */}
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <DialogContent
-          className={`${glass} bg-white/90 border-dark-grey-200 max-w-md mx-auto text-black font-bold`}
+          className={`${glass} bg-brand-surface border-brand-border text-white font-bold p-0 max-w-md w-full overflow-hidden rounded-3xl`}
         >
-          <DialogHeader>
-            <DialogTitle className="font-bold text-black">
-              Withdraw Funds
-            </DialogTitle>
-            <DialogDescription>
-              Withdraw your available balance to your bank account.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="p-4 bg-emerald-50 rounded-lg">
-              <p className="text-sm text-gray-600">Available Balance</p>
-              <p className="text-2xl font-bold text-emerald-600">
-                ${availableBalance.toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <Label>Amount (USD)</Label>
-              <Input
-                type="number"
-                placeholder="Enter amount"
-                className="mt-1"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Bank</Label>
-              <select
-                className="w-full mt-1 p-2 border rounded-lg"
-                value={withdrawBank}
-                onChange={(e) => setWithdrawBank(e.target.value)}
-              >
-                <option value="">Select bank</option>
-                <option value="access">Access Bank</option>
-                <option value="gtb">GT Bank</option>
-                <option value="zenith">Zenith Bank</option>
-              </select>
-            </div>
-            <div>
-              <Label>Account Number</Label>
-              <Input
-                type="text"
-                placeholder="Enter account number"
-                className="mt-1"
-                value={withdrawAccountNumber}
-                onChange={(e) => setWithdrawAccountNumber(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Account Name</Label>
-              <Input
-                type="text"
-                placeholder="Enter account name"
-                className="mt-1"
-                value={withdrawAccountName}
-                onChange={(e) => setWithdrawAccountName(e.target.value)}
-              />
+          <div className="max-h-[85vh] overflow-y-auto p-5 sm:p-8 custom-scrollbar">
+            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
+            <DialogHeader className="relative z-10 mb-4 sm:mb-6">
+              <DialogTitle className="text-2xl sm:text-3xl font-black text-white">
+                Withdraw Funds
+              </DialogTitle>
+              <DialogDescription className="text-brand-muted text-xs sm:text-sm">
+                Withdraw your available balance securely.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 sm:space-y-5 relative z-10">
+              <div className="p-3 sm:p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl mb-4 sm:mb-6">
+                <p className="text-xs text-emerald-400/80 font-bold mb-1">Available Balance</p>
+                <p className="text-2xl sm:text-3xl font-black text-emerald-400">
+                  ${availableBalance.toLocaleString()}
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Amount (USD)</Label>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    className="w-full p-3 sm:p-4 h-auto bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Receiving Bank / Protocol</Label>
+                  <Select value={withdrawBank} onValueChange={setWithdrawBank}>
+                    <SelectTrigger className="w-full p-3 sm:p-4 h-auto bg-brand-dark border border-white/10 text-white font-bold rounded-2xl">
+                      <SelectValue placeholder="Select institution" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-brand-surface border-white/10 text-white">
+                      <SelectItem value="Bitcoin">Bitcoin (BTC)</SelectItem>
+                      <SelectItem value="Ethereum">Ethereum (ERC20)</SelectItem>
+                      <SelectItem value="Tether">Tether (TRC20)</SelectItem>
+                      <SelectItem value="Bank Wire">International Wire</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Wallet Address / Account Number</Label>
+                  <Input
+                    placeholder="Enter destination details"
+                    className="w-full p-3 sm:p-4 h-auto bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    value={withdrawAccountNumber}
+                    onChange={(e) => setWithdrawAccountNumber(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Account Name</Label>
+                  <Input
+                    placeholder="Enter account name"
+                    className="w-full p-3 sm:p-4 h-auto bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    value={withdrawAccountName}
+                    onChange={(e) => setWithdrawAccountName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6 sm:mt-8 relative z-10">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setWithdrawOpen(false)}
+                  className="flex-1 rounded-xl bg-transparent border-white/10 text-white hover:bg-white/5 font-bold h-10 sm:h-12 text-sm"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleWithdraw}
+                  disabled={!withdrawAmount || !withdrawBank || !withdrawAccountNumber}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all h-10 sm:h-12 text-sm disabled:opacity-50"
+                >
+                  Withdraw
+                </Button>
+              </DialogFooter>
             </div>
           </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setWithdrawOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleWithdraw}>Submit Withdrawal</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Transfer Dialog */}
       <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
         <DialogContent
-          className={`${glass} bg-white/90 border-dark-grey-200 max-w-md mx-auto text-black font-bold`}
+          className={`${glass} bg-brand-surface border-brand-border text-white font-bold p-0 max-w-md w-full overflow-hidden rounded-3xl`}
         >
-          <DialogHeader>
-            <DialogTitle className="font-bold text-black">
-              Transfer Funds
-            </DialogTitle>
-            <DialogDescription>
-              Transfer funds to another Millennium user.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="p-4 bg-emerald-50 rounded-lg">
-              <p className="text-sm text-gray-600">Available Balance</p>
-              <p className="text-2xl font-bold text-emerald-600">
-                ${availableBalance.toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <Label>Recipient Email or ID</Label>
-              <Input
-                type="text"
-                placeholder="Enter email or user ID"
-                className="mt-1"
-                value={transferRecipient}
-                onChange={(e) => setTransferRecipient(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Amount (USD)</Label>
-              <Input
-                type="number"
-                placeholder="Enter amount"
-                className="mt-1"
-                value={transferAmount}
-                onChange={(e) => setTransferAmount(e.target.value)}
-              />
+          <div className="max-h-[85vh] overflow-y-auto p-5 sm:p-8 custom-scrollbar">
+            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
+            <DialogHeader className="relative z-10 mb-4 sm:mb-6">
+              <DialogTitle className="text-2xl sm:text-3xl font-black text-white">
+                Transfer Funds
+              </DialogTitle>
+              <DialogDescription className="text-brand-muted text-xs sm:text-sm">
+                Transfer funds securely to another Millennium user.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 sm:space-y-5 relative z-10">
+              <div className="p-3 sm:p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl mb-4 sm:mb-6">
+                <p className="text-xs text-emerald-400/80 font-bold mb-1">Available Balance</p>
+                <p className="text-2xl sm:text-3xl font-black text-emerald-400">
+                  ${availableBalance.toLocaleString()}
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Recipient Email or ID</Label>
+                  <Input
+                    placeholder="Enter email or user ID"
+                    className="w-full p-3 sm:p-4 h-auto bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    value={transferRecipient}
+                    onChange={(e) => setTransferRecipient(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="block text-xs font-bold text-brand-muted mb-2 uppercase tracking-wider">Amount (USD)</Label>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    className="w-full p-3 sm:p-4 h-auto bg-white/5 border border-white/10 rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6 sm:mt-8 relative z-10">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTransferOpen(false)}
+                  className="flex-1 rounded-xl bg-transparent border-white/10 text-white hover:bg-white/5 font-bold h-10 sm:h-12 text-sm"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleTransfer}
+                  disabled={!transferAmount || !transferRecipient}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all h-10 sm:h-12 text-sm disabled:opacity-50"
+                >
+                  Transfer Now
+                </Button>
+              </DialogFooter>
             </div>
           </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setTransferOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleTransfer}>
-              <Send className="w-4 h-4 mr-2" />
-              Transfer
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -950,7 +1031,7 @@ export default function Dashboard() {
                 <div
                   className={`w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-r ${action.bg} border border-gray-400/30 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-all`}
                 >
-                  <action.icon className="w-10 h-10 text-black drop-shadow-lg" />
+                  <action.icon className="w-10 h-10 text-white drop-shadow-lg" />
                 </div>
                 <h3 className="text-xl font-bold mb-2 group-hover:text-yellow-500 transition-colors">
                   {action.title}
@@ -968,10 +1049,10 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="text-center mb-16">
-            <h1 className="text-6xl font-black bg-gradient-to-r from-black to-gray-800 bg-clip-text text-black mb-6 leading-tight">
+            <h1 className="text-6xl font-black bg-gradient-to-r from-black to-gray-800 bg-clip-text text-white mb-6 leading-tight">
               Portfolio Overview
             </h1>
-            <p className="text-xl text-black font-bold max-w-2xl mx-auto">
+            <p className="text-xl text-white font-bold max-w-2xl mx-auto">
               Monitor your global investment performance with
               institutional-grade analytics
             </p>
@@ -1036,7 +1117,7 @@ export default function Dashboard() {
                     <metric.icon className="w-8 h-8 text-emerald-400" />
                   </div>
                   <Badge
-                    className={`text-xs font-bold px-4 py-2 rounded-full shadow-lg ${metric.change > 0 ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-emerald-500/20" : "bg-red-500/20 text-red-400 border-red-500/30 shadow-red-500/20"}`}
+                    className={`text-xs font-bold px-4 py-2 rounded-full shadow-lg ${metric.change > 0 ? "bg-emerald-500/100/20 text-emerald-400 border-emerald-500/30 shadow-emerald-500/20" : "bg-red-500/20 text-red-400 border-red-500/30 shadow-red-500/20"}`}
                   >
                     {metric.change > 0 ? (
                       <ArrowUpRight className="w-3 h-3 inline" />
@@ -1046,15 +1127,15 @@ export default function Dashboard() {
                     {Math.abs(metric.change)}%
                   </Badge>
                 </div>
-                <h3 className="text-2xl font-bold text-black mb-3 capitalize tracking-tight">
+                <h3 className="text-2xl font-bold text-white mb-3 capitalize tracking-tight">
                   {metric.title}
                 </h3>
-                <div className="text-5xl font-black text-black mb-1">
+                <div className="text-5xl font-black text-white mb-1">
                   {typeof metric.value === "number"
                     ? `${metric.value.toLocaleString()}`
                     : metric.value}
                 </div>
-                <p className="text-black text-sm uppercase tracking-wider font-bold">
+                <p className="text-white text-sm uppercase tracking-wider font-bold">
                   Institutional Grade
                 </p>
               </motion.div>
@@ -1070,10 +1151,10 @@ export default function Dashboard() {
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
               <div>
-                <h3 className="text-2xl font-bold text-black mb-2">
+                <h3 className="text-2xl font-bold text-white mb-2">
                   Portfolio Performance
                 </h3>
-                <p className="text-black font-bold">
+                <p className="text-white font-bold">
                   Interactive chart with timeframe selector
                 </p>
               </div>
@@ -1165,10 +1246,10 @@ export default function Dashboard() {
           transition={{ delay: 1.5 }}
         >
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-black bg-gradient-to-r from-black via-wine to-dark-grey-900 bg-clip-text text-black mb-6 font-bold">
+            <h2 className="text-4xl font-black bg-gradient-to-r from-black via-wine to-dark-grey-900 bg-clip-text text-white mb-6 font-bold">
               Asset Allocation
             </h2>
-            <p className="text-xl text-black font-bold max-w-2xl mx-auto">
+            <p className="text-xl text-white font-bold max-w-2xl mx-auto">
               Your portfolio diversification across asset classes
             </p>
           </div>
@@ -1202,22 +1283,22 @@ export default function Dashboard() {
             </motion.div>
             {/* Allocation Table */}
             <motion.div className={`${glass} p-8 rounded-3xl`}>
-              <h3 className="text-2xl font-bold text-black mb-8 text-left font-bold">
+              <h3 className="text-2xl font-bold text-white mb-8 text-left font-bold">
                 Detailed Breakdown
               </h3>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-black font-bold">
+                    <TableHead className="text-white font-bold">
                       Asset Class
                     </TableHead>
-                    <TableHead className="text-black font-bold text-right">
+                    <TableHead className="text-white font-bold text-right">
                       Allocation
                     </TableHead>
-                    <TableHead className="text-black font-bold text-right">
+                    <TableHead className="text-white font-bold text-right">
                       Value
                     </TableHead>
-                    <TableHead className="text-black font-bold text-right">
+                    <TableHead className="text-white font-bold text-right">
                       Risk Score
                     </TableHead>
                   </TableRow>
@@ -1228,7 +1309,7 @@ export default function Dashboard() {
                       key={asset.name}
                       className="border-white/10 hover:bg-white/5"
                     >
-                      <TableCell className="font-medium text-black font-bold capitalize">
+                      <TableCell className="font-medium text-white font-bold capitalize">
                         {asset.name}
                       </TableCell>
                       <TableCell className="text-right">
@@ -1242,7 +1323,7 @@ export default function Dashboard() {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-bold text-black">
+                      <TableCell className="text-right font-bold text-white">
                         $
                         {(
                           (portfolioValue * asset.value) /
@@ -1271,10 +1352,10 @@ export default function Dashboard() {
         >
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
             <div>
-              <h2 className="text-4xl font-black bg-gradient-to-r from-black via-wine to-dark-grey-900 bg-clip-text text-black mb-2 font-bold">
+              <h2 className="text-4xl font-black bg-gradient-to-r from-black via-wine to-dark-grey-900 bg-clip-text text-white mb-2 font-bold">
                 Active Investments
               </h2>
-              <p className="text-xl text-black font-bold">
+              <p className="text-xl text-white font-bold">
                 Monitor your ongoing investment positions
               </p>
             </div>
@@ -1295,20 +1376,20 @@ export default function Dashboard() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-white/10">
-                  <TableHead className="text-black font-bold w-20">
+                  <TableHead className="text-white font-bold w-20">
                     ID
                   </TableHead>
-                  <TableHead className="text-black font-bold">Plan</TableHead>
-                  <TableHead className="text-black font-bold text-right">
+                  <TableHead className="text-white font-bold">Plan</TableHead>
+                  <TableHead className="text-white font-bold text-right">
                     Amount
                   </TableHead>
-                  <TableHead className="text-black font-bold text-right">
+                  <TableHead className="text-white font-bold text-right">
                     ROI
                   </TableHead>
-                  <TableHead className="text-black font-bold">
+                  <TableHead className="text-white font-bold">
                     Progress
                   </TableHead>
-                  <TableHead className="text-black font-bold w-28">
+                  <TableHead className="text-white font-bold w-28">
                     Status
                   </TableHead>
                   <TableHead className="w-16"></TableHead>
@@ -1337,7 +1418,7 @@ export default function Dashboard() {
                       key={investment.id}
                       className="border-white/5 hover:bg-white/5 transition-colors"
                     >
-                      <TableCell className="font-mono text-sm text-black font-bold">
+                      <TableCell className="font-mono text-sm text-white font-bold">
                         {investment.id}
                       </TableCell>
                       <TableCell>
@@ -1346,10 +1427,10 @@ export default function Dashboard() {
                             <BarChart3 className="w-5 h-5 text-slate-900" />
                           </div>
                           <div>
-                            <p className="font-bold text-black">
+                            <p className="font-bold text-white">
                               {investment.plan}
                             </p>
-                            <p className="text-sm text-black font-bold">
+                            <p className="text-sm text-white font-bold">
                               ${investment.amount.toLocaleString()} invested
                             </p>
                           </div>
@@ -1368,7 +1449,7 @@ export default function Dashboard() {
                           value={investment.progress}
                           className="h-3 bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-emerald-500 [&>div]:to-gold [&>div]:shadow-lg"
                         />
-                        <p className="text-xs text-black font-bold text-right mt-1">
+                        <p className="text-xs text-white font-bold text-right mt-1">
                           {investment.progress}%
                         </p>
                       </TableCell>

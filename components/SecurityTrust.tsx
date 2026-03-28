@@ -1,98 +1,85 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Shield, CheckCircle, Lock } from "lucide-react"
 
 const features = [
   {
-    icon: <Shield className="w-12 h-12 text-blue-600" />,
-    title: 'End-to-End Encryption',
-    desc: 'Military-grade encryption protects all your data and transactions'
+    icon: <Shield className="w-10 h-10 text-cyan-400" />,
+    title: 'Bank-Grade Encryption',
+    desc: 'AES-256 encryption protects your assets and personal data in transit and at rest.'
   },
   {
-    icon: <CheckCircle className="w-12 h-12 text-emerald-600" />,
-    title: 'Regulatory Compliance',
-    desc: 'SEC registered and compliant with all federal regulations'
+    icon: <CheckCircle className="w-10 h-10 text-emerald-400" />,
+    title: 'Regulated & Compliant',
+    desc: 'Licensed digital asset custodian with strict KYC/AML policy enforcement.'
   },
   {
-    icon: <Lock className="w-12 h-12 text-slate-600" />,
-    title: 'SIPC Insured',
-    desc: 'Your investments are protected up to $500,000 by SIPC insurance'
+    icon: <Lock className="w-10 h-10 text-emerald-500" />,
+    title: 'Cold Storage Vaults',
+    desc: '95% of digital assets are stored in multi-signature cold wallets completely offline.'
   }
 ]
 
-import { Shield, CheckCircle, Lock } from "lucide-react"
-
-
 export default function SecurityTrust() {
   return (
-    <section className="py-24 bg-[#f5f6f8]">
-      <div className="max-w-6xl mx-auto px-6 text-center">
-        {/* Header */}
-        <motion.h2 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-4xl lg:text-5xl font-black text-slate-900 mb-3"
+    <section className="py-24 sm:py-32 bg-brand-dark relative overflow-hidden text-center border-b border-brand-border/50">
+      {/* Background glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <motion.div
+           initial={{ opacity: 0, y: 30 }}
+           whileInView={{ opacity: 1, y: 0 }}
+           viewport={{ once: true, margin: "-100px" }}
+           transition={{ duration: 0.8 }}
         >
-          Bank-Level Security & Trust
-        </motion.h2>
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-base text-slate-600 mb-16 max-w-2xl mx-auto leading-relaxed"
-        >
-          Your investments are protected with the highest security standards
-        </motion.p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-emerald-500/20 mb-6">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase">Security First</span>
+          </div>
+          <h2 className="text-4xl lg:text-5xl font-black text-white mb-4 tracking-tight drop-shadow-md">
+            Institutional <span className="text-gradient">Security</span>
+          </h2>
+          <p className="text-base sm:text-lg text-brand-muted mb-16 max-w-2xl mx-auto leading-relaxed">
+            Your investments are protected by industry-leading security architecture. We never cut corners when it comes to safeguarding your wealth.
+          </p>
+        </motion.div>
 
         {/* Feature Cards */}
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 mb-14 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ 
-                y: -6,
-                scale: 1.02,
-                transition: { duration: 0.3 }
-              }}
-              className="w-full lg:w-[320px] bg-white rounded-2xl p-9 shadow-[0_8px_20px_rgba(0,0,0,0.05)] border border-slate-100 hover:shadow-[0_10px_35px_rgba(59,130,246,0.35)] transition-all duration-300 flex flex-col items-center text-center"
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: index * 0.15 }}
+              className="group glass-panel glass-panel-hover p-10 flex flex-col items-center text-center relative overflow-hidden rounded-2xl"
             >
-              <div className="text-4xl mb-6 group-hover:text-blue-500/80 transition-colors duration-300">
-                {feature.icon}
+              {/* Top border highlight */}
+              <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className="relative mb-8">
+                <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full scale-150 group-hover:bg-cyan-500/20 transition-colors duration-500" />
+                <div className="w-20 h-20 rounded-2xl glass-panel border border-white/10 flex items-center justify-center relative shadow-inner">
+                   {feature.icon}
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-4">
+
+              <h3 className="text-xl font-bold text-white mb-4 group-hover:text-emerald-400 transition-colors">
                 {feature.title}
               </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-brand-muted leading-relaxed">
                 {feature.desc}
               </p>
             </motion.div>
           ))}
         </div>
-
-        {/* Bottom Button */}
-        <motion.button 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          whileHover={{ 
-            scale: 1.05,
-            backgroundColor: '#2563eb',
-            color: 'white',
-            boxShadow: '0 0 20px rgba(37,99,235,0.5)'
-          }}
-          whileTap={{ scale: 0.98 }}
-          className="inline-flex items-center gap-3 bg-[#eaf2ff] text-[#2563eb] font-medium px-12 py-4 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 text-base"
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-          </svg>
-          Your Security is Our Priority
-        </motion.button>
       </div>
     </section>
   )
 }
-
